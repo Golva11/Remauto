@@ -563,6 +563,13 @@
       navigator.serviceWorker.register('sw.js');
     }
   </script>
+
+<script>
+  if (window.matchMedia('(display-mode: standalone)').matches && location.pathname.endsWith('/')) {
+    location.replace(location.pathname + 'index.html');
+  }
+</script>
+
 </head>
 <body>
     <div class="container">
@@ -1946,7 +1953,14 @@
                         .total { border-top: 2px solid #000; padding-top: 10px; font-weight: bold; font-size: 18px; }
                         .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #666; }
                     </style>
-                </head>
+                
+<script>
+  if (window.matchMedia('(display-mode: standalone)').matches && location.pathname.endsWith('/')) {
+    location.replace(location.pathname + 'index.html');
+  }
+</script>
+
+</head>
                 <body>
                     <div class="header">
                         <h2>АвтоСервис</h2>
@@ -2213,7 +2227,14 @@
                         .total { border-top: 2px solid #000; padding-top: 10px; font-weight: bold; font-size: 18px; }
                         .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #666; }
                     </style>
-                </head>
+                
+<script>
+  if (window.matchMedia('(display-mode: standalone)').matches && location.pathname.endsWith('/')) {
+    location.replace(location.pathname + 'index.html');
+  }
+</script>
+
+</head>
                 <body>
                     <div class="header">
                         <h2>АвтоСервис</h2>
