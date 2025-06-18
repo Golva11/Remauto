@@ -1,0 +1,2631 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>АвтоКалькулятор - Расчет стоимости ремонтов</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --background: #fafafa;
+            --foreground: #0a0a0a;
+            --card: #ffffff;
+            --card-foreground: #0a0a0a;
+            --primary: #3b82f6;
+            --primary-foreground: #ffffff;
+            --secondary: #f1f5f9;
+            --secondary-foreground: #0f172a;
+            --muted: #f1f5f9;
+            --muted-foreground: #64748b;
+            --accent: #f1f5f9;
+            --accent-foreground: #0f172a;
+            --destructive: #ef4444;
+            --destructive-foreground: #ffffff;
+            --border: #e2e8f0;
+            --input: #e2e8f0;
+            --ring: #3b82f6;
+            --radius: 1rem;
+        }
+
+        [data-theme="dark"] {
+            --background: #0a0a0a;
+            --foreground: #fafafa;
+            --card: #0a0a0a;
+            --card-foreground: #fafafa;
+            --primary: #60a5fa;
+            --primary-foreground: #ffffff;
+            --secondary: #1e293b;
+            --secondary-foreground: #fafafa;
+            --muted: #1e293b;
+            --muted-foreground: #94a3b8;
+            --accent: #1e293b;
+            --accent-foreground: #fafafa;
+            --destructive: #7f1d1d;
+            --destructive-foreground: #fafafa;
+            --border: #1e293b;
+            --input: #1e293b;
+            --ring: #60a5fa;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--background);
+            color: var(--foreground);
+            line-height: 1.5;
+            transition: all 0.3s ease;
+        }
+
+        /* Neumorphic styles */
+        .neumorphic-card {
+            background: var(--background);
+            border-radius: var(--radius);
+            box-shadow: 8px 8px 16px rgba(0, 0, 0, 0.1), -8px -8px 16px rgba(255, 255, 255, 0.8);
+            transition: all 0.3s ease;
+            border: 1px solid var(--border);
+        }
+
+        [data-theme="dark"] .neumorphic-card {
+            box-shadow: 8px 8px 16px rgba(0, 0, 0, 0.3), -8px -8px 16px rgba(255, 255, 255, 0.05);
+        }
+
+        .neumorphic-button {
+            background: var(--background);
+            border: 1px solid var(--border);
+            border-radius: calc(var(--radius) - 4px);
+            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px rgba(255, 255, 255, 0.8);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            color: var(--foreground);
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .neumorphic-button:hover {
+            box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.1), -3px -3px 6px rgba(255, 255, 255, 0.8);
+        }
+
+        .neumorphic-button:active {
+            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px rgba(255, 255, 255, 0.8);
+        }
+
+        [data-theme="dark"] .neumorphic-button {
+            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3), -5px -5px 10px rgba(255, 255, 255, 0.05);
+        }
+
+        [data-theme="dark"] .neumorphic-button:hover {
+            box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3), -3px -3px 6px rgba(255, 255, 255, 0.05);
+        }
+
+        .neumorphic-input {
+            background: var(--background);
+            border: 1px solid var(--border);
+            border-radius: calc(var(--radius) - 4px);
+            box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.1), inset -3px -3px 6px rgba(255, 255, 255, 0.8);
+            padding: 0.5rem 0.75rem;
+            color: var(--foreground);
+            font-size: 0.875rem;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        [data-theme="dark"] .neumorphic-input {
+            box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.2), inset -3px -3px 6px rgba(255, 255, 255, 0.03);
+        }
+
+        .neumorphic-input:focus {
+            outline: none;
+            ring: 2px solid var(--ring);
+        }
+
+        .primary-button {
+            background: var(--primary);
+            color: var(--primary-foreground);
+            border: none;
+        }
+
+        .destructive-button {
+            background: var(--destructive);
+            color: var(--destructive-foreground);
+            border: none;
+        }
+
+        /* Layout */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .title {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .title .accent {
+            color: var(--primary);
+        }
+
+        /* Tabs */
+        .tabs {
+            margin-bottom: 2rem;
+        }
+
+        .tab-list {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 0.5rem;
+            background: var(--background);
+            padding: 0.5rem;
+            border-radius: var(--radius);
+            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px rgba(255, 255, 255, 0.8);
+            margin-bottom: 2rem;
+        }
+
+        [data-theme="dark"] .tab-list {
+            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3), -5px -5px 10px rgba(255, 255, 255, 0.05);
+        }
+
+        .tab-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem;
+            border: none;
+            background: transparent;
+            color: var(--muted-foreground);
+            border-radius: calc(var(--radius) - 4px);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.875rem;
+        }
+
+        .tab-button.active {
+            background: var(--primary);
+            color: var(--primary-foreground);
+            box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.1), -3px -3px 6px rgba(255, 255, 255, 0.8);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Grid layouts */
+        .grid {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .grid-cols-1 { grid-template-columns: repeat(1, 1fr); }
+        .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+        .grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+        .grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+        @media (max-width: 768px) {
+            .grid-cols-2, .grid-cols-3, .grid-cols-4 {
+                grid-template-columns: 1fr;
+            }
+            .tab-list {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        /* Card */
+        .card {
+            padding: 1.5rem;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .card-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+
+        /* Form elements */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--foreground);
+        }
+
+        .select {
+            background: var(--background);
+            border: 1px solid var(--border);
+            border-radius: calc(var(--radius) - 4px);
+            padding: 0.5rem 0.75rem;
+            color: var(--foreground);
+            font-size: 0.875rem;
+            width: 100%;
+            cursor: pointer;
+        }
+
+        .textarea {
+            background: var(--background);
+            border: 1px solid var(--border);
+            border-radius: calc(var(--radius) - 4px);
+            padding: 0.5rem 0.75rem;
+            color: var(--foreground);
+            font-size: 0.875rem;
+            width: 100%;
+            min-height: 80px;
+            resize: vertical;
+            font-family: inherit;
+        }
+
+        /* Utility classes */
+        .flex {
+            display: flex;
+        }
+
+        .items-center {
+            align-items: center;
+        }
+
+        .justify-between {
+            justify-content: space-between;
+        }
+
+        .gap-2 {
+            gap: 0.5rem;
+        }
+
+        .gap-4 {
+            gap: 1rem;
+        }
+
+        .mb-4 {
+            margin-bottom: 1rem;
+        }
+
+        .mb-6 {
+            margin-bottom: 1.5rem;
+        }
+
+        .text-sm {
+            font-size: 0.875rem;
+        }
+
+        .text-lg {
+            font-size: 1.125rem;
+        }
+
+        .text-xl {
+            font-size: 1.25rem;
+        }
+
+        .text-2xl {
+            font-size: 1.5rem;
+        }
+
+        .font-medium {
+            font-weight: 500;
+        }
+
+        .font-semibold {
+            font-weight: 600;
+        }
+
+        .font-bold {
+            font-weight: 700;
+        }
+
+        .text-muted {
+            color: var(--muted-foreground);
+        }
+
+        .text-primary {
+            color: var(--primary);
+        }
+
+        .text-destructive {
+            color: var(--destructive);
+        }
+
+        .text-green {
+            color: #22c55e;
+        }
+
+        .text-red {
+            color: #ef4444;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: var(--background);
+            border-radius: var(--radius);
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .close-button {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--muted-foreground);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-fadeIn {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .animate-slideDown {
+            animation: slideDown 0.3s ease-in-out;
+        }
+
+        /* Icons */
+        .icon {
+            width: 1rem;
+            height: 1rem;
+            display: inline-block;
+        }
+
+        /* Theme toggle */
+        .theme-toggle {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Status indicators */
+        .status-low {
+            border: 2px solid var(--destructive);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.375rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .badge-income {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .badge-expense {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        [data-theme="dark"] .badge-income {
+            background: #14532d;
+            color: #bbf7d0;
+        }
+
+        [data-theme="dark"] .badge-expense {
+            background: #7f1d1d;
+            color: #fecaca;
+        }
+
+        /* Calendar styles */
+        .calendar {
+            background: var(--background);
+            border-radius: var(--radius);
+            padding: 1rem;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0.25rem;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+        }
+
+        .calendar-day:hover {
+            background: var(--accent);
+        }
+
+        .calendar-day.selected {
+            background: var(--primary);
+            color: var(--primary-foreground);
+        }
+
+        .calendar-day.today {
+            background: var(--accent);
+            font-weight: 600;
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--muted-foreground);
+        }
+
+        .empty-state .icon {
+            width: 4rem;
+            height: 4rem;
+            margin: 0 auto 1rem;
+            opacity: 0.5;
+        }
+
+        /* Print styles */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            .print-content, .print-content * {
+                visibility: visible;
+            }
+            .print-content {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+        }
+    </style>
+
+  <link rel="manifest" href="manifest.json">
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js');
+    }
+  </script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">Авто<span class="accent">Калькулятор</span></h1>
+            <button class="neumorphic-button theme-toggle" onclick="toggleTheme()">
+                <span id="theme-icon">🌙</span>
+            </button>
+        </div>
+
+        <div class="tabs">
+            <div class="tab-list">
+                <button class="tab-button active" onclick="showTab('warehouse', event)">
+                    Склад
+                </button>
+                <button class="tab-button" onclick="showTab('repair', event)">
+                    Ремонт
+                </button>
+                <button class="tab-button" onclick="showTab('materials', event)">
+                    Материалы
+                </button>
+                <button class="tab-button" onclick="showTab('history', event)">
+                    История
+                </button>
+                <button class="tab-button" onclick="showTab('finance', event)">
+                    Финансы
+                </button>
+                <button class="tab-button" onclick="showTab('settings', event)">
+                    Настройки
+                </button>
+            </div>
+
+            <!-- Warehouse Tab -->
+            <div id="warehouse" class="tab-content active">
+                <div class="card-header">
+                    <h2 class="text-xl font-semibold">Склад материалов</h2>
+                    <button class="neumorphic-button primary-button" onclick="showAddWarehouseItemModal()">
+                        ➕ Добавить материал
+                    </button>
+                </div>
+                <div id="warehouse-items" class="grid grid-cols-3 gap-4"></div>
+            </div>
+
+            <!-- Repair Tab -->
+            <div id="repair" class="tab-content">
+                <div class="card-header">
+                    <h2 class="text-xl font-semibold flex items-center gap-2">
+                        🚗 Калькулятор ремонта
+                    </h2>
+                    <div class="flex gap-2">
+                        <button class="neumorphic-button" onclick="clearRepair()">Очистить</button>
+                        <button class="neumorphic-button primary-button" onclick="saveRepair()">💾 Сохранить ремонт</button>
+                    </div>
+                </div>
+                
+                <div class="grid gap-6">
+                    <!-- Client Info -->
+                    <div class="neumorphic-card card">
+                        <h3 class="font-medium mb-4">Информация о клиенте</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="form-group">
+                                <label class="label">Имя клиента</label>
+                                <input type="text" id="client-name" class="neumorphic-input" placeholder="Введите имя клиента">
+                            </div>
+                            <div class="form-group">
+                                <label class="label">Информация об автомобиле</label>
+                                <input type="text" id="car-info" class="neumorphic-input" placeholder="Марка, модель, год">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="label">Описание работ</label>
+                            <textarea id="repair-description" class="textarea" placeholder="Опишите выполняемые работы" rows="3"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Add Materials -->
+                    <div class="neumorphic-card card">
+                        <h3 class="font-medium mb-4">Добавить материалы</h3>
+                        <div id="available-materials" class="grid grid-cols-3 gap-3"></div>
+                    </div>
+
+                    <!-- Selected Materials -->
+                    <div id="selected-materials-section" class="neumorphic-card card hidden">
+                        <h3 class="font-medium mb-4">Используемые материалы</h3>
+                        <div id="selected-materials" class="grid gap-3"></div>
+                    </div>
+
+                    <!-- Labor Cost -->
+                    <div class="neumorphic-card card">
+                        <h3 class="font-medium mb-4">Стоимость работ</h3>
+                        <div class="form-group">
+                            <label class="label">Стоимость работ</label>
+                            <input type="number" id="labor-cost" class="neumorphic-input" placeholder="0.00" step="0.01">
+                        </div>
+                    </div>
+
+                    <!-- Total Cost -->
+                    <div id="total-cost-section" class="neumorphic-card card hidden">
+                        <h3 class="font-medium mb-4">Итоговая стоимость</h3>
+                        <div class="grid gap-2">
+                            <div class="flex justify-between">
+                                <span>Материалы:</span>
+                                <span id="total-materials-cost">0 ₽</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Работы:</span>
+                                <span id="total-labor-cost">0 ₽</span>
+                            </div>
+                            <div class="flex justify-between font-bold text-lg text-primary" style="border-top: 1px solid var(--border); padding-top: 0.5rem;">
+                                <span>Итого:</span>
+                                <span id="total-repair-cost">0 ₽</span>
+                            </div>
+                        </div>
+                        <div class="flex justify-end mt-4">
+                            <button class="neumorphic-button primary-button" onclick="showReceiptModal()">
+                                🧾 Показать чек
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Materials Tab -->
+            <div id="materials" class="tab-content">
+                <div class="card-header">
+                    <h2 class="text-xl font-semibold">Список материалов</h2>
+                    <div class="flex gap-2">
+                        <button class="neumorphic-button primary-button" onclick="showAddMaterialModal()">
+                            ➕ Добавить материал
+                        </button>
+                        <button class="neumorphic-button primary-button" onclick="showSaveCalculationModal()">
+                            💾 Сохранить расчет
+                        </button>
+                    </div>
+                </div>
+                <div id="materials-list" class="grid grid-cols-3 gap-4"></div>
+                <div id="materials-total" class="neumorphic-card card mt-6 hidden">
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-medium">Общая стоимость:</h3>
+                        <span id="materials-total-amount" class="text-xl font-bold text-primary">0 ₽</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- History Tab -->
+            <div id="history" class="tab-content">
+                <h2 class="text-xl font-semibold mb-6">История расчетов и ремонтов</h2>
+                
+                <div id="repairs-history-section">
+                    <h3 class="text-lg font-semibold mb-4">История ремонтов</h3>
+                    <div id="repairs-history" class="grid grid-cols-3 gap-4 mb-8"></div>
+                </div>
+
+                <div id="calculations-history-section">
+                    <h3 class="text-lg font-semibold mb-4">История расчетов материалов</h3>
+                    <div id="calculations-history" class="grid grid-cols-3 gap-4"></div>
+                </div>
+            </div>
+
+            <!-- Finance Tab -->
+            <div id="finance" class="tab-content">
+                <div class="card-header">
+                    <h2 class="text-xl font-semibold flex items-center gap-2">
+                        📊 Финансовый учет
+                    </h2>
+                    <div class="flex gap-2">
+                        <button class="neumorphic-button" onclick="importRepairIncome()">Импорт из ремонтов</button>
+                        <button class="neumorphic-button primary-button" onclick="showAddTransactionModal()">
+                            ➕ Добавить транзакцию
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Monthly Overview -->
+                <div class="grid grid-cols-4 gap-4 mb-6">
+                    <div class="neumorphic-card card">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-muted">Доходы</p>
+                                <p id="monthly-income" class="text-2xl font-bold text-green">0 ₽</p>
+                            </div>
+                            <span class="text-2xl">📈</span>
+                        </div>
+                    </div>
+                    <div class="neumorphic-card card">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-muted">Расходы</p>
+                                <p id="monthly-expenses" class="text-2xl font-bold text-red">0 ₽</p>
+                            </div>
+                            <span class="text-2xl">📉</span>
+                        </div>
+                    </div>
+                    <div class="neumorphic-card card">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-muted">Прибыль</p>
+                                <p id="monthly-profit" class="text-2xl font-bold text-primary">0 ₽</p>
+                            </div>
+                            <span class="text-2xl">💰</span>
+                        </div>
+                    </div>
+                    <div class="neumorphic-card card">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-muted">Транзакций</p>
+                                <p id="monthly-transactions" class="text-2xl font-bold">0</p>
+                            </div>
+                            <span class="text-2xl">📄</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Month Selector and Calendar -->
+                <div class="grid grid-cols-2 gap-6">
+                    <div class="neumorphic-card card">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-medium">Отчет за месяц</h3>
+                            <div class="flex items-center gap-2">
+                                <button class="neumorphic-button" onclick="changeMonth(-1)">‹</button>
+                                <span id="current-month" class="font-medium"></span>
+                                <button class="neumorphic-button" onclick="changeMonth(1)">›</button>
+                            </div>
+                        </div>
+                        <div id="category-stats" class="grid gap-4"></div>
+                    </div>
+
+                    <div class="neumorphic-card card">
+                        <h3 class="font-medium mb-4">Транзакции за <span id="selected-date-display"></span></h3>
+                        <div class="calendar mb-4">
+                            <div id="calendar-grid" class="calendar-grid"></div>
+                        </div>
+                        <div id="daily-transactions" class="grid gap-3" style="max-height: 300px; overflow-y: auto;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div id="settings" class="tab-content">
+                <h2 class="text-xl font-semibold mb-6">Настройки</h2>
+                
+                <div class="neumorphic-card card">
+                    <div class="grid gap-6">
+                        <div>
+                            <h3 class="text-lg font-medium mb-4">Внешний вид</h3>
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <label class="label">Темная тема</label>
+                                    <p class="text-sm text-muted">Переключение между светлой и темной темой</p>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="dark-theme-toggle" onchange="toggleTheme()">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div style="border-top: 1px solid var(--border); padding-top: 1.5rem;">
+                            <h3 class="text-lg font-medium mb-4">Единицы измерения</h3>
+                            <div class="grid gap-4">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <label class="label">Единицы жидкости</label>
+                                        <p class="text-sm text-muted">Использовать литры вместо миллилитров</p>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" id="use-liters" onchange="updateSettings()">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <label class="label">Единицы веса</label>
+                                        <p class="text-sm text-muted">Использовать килограммы вместо граммов</p>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" id="use-kilograms" onchange="updateSettings()">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="border-top: 1px solid var(--border); padding-top: 1.5rem;">
+                            <h3 class="text-lg font-medium mb-4">Валюта</h3>
+                            <div class="form-group">
+                                <label class="label">Валюта</label>
+                                <select id="currency-select" class="select" onchange="updateSettings()">
+                                    <option value="RUB">Российский рубль (₽)</option>
+                                    <option value="USD">Доллар США ($)</option>
+                                    <option value="EUR">Евро (€)</option>
+                                    <option value="KZT">Казахстанский тенге (₸)</option>
+                                    <option value="BYN">Белорусский рубль (Br)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end" style="border-top: 1px solid var(--border); padding-top: 1.5rem;">
+                            <button class="neumorphic-button primary-button" onclick="saveSettings()">
+                                Сохранить настройки
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals will be inserted here by JavaScript -->
+    <div id="modal-container"></div>
+
+    <style>
+        /* Switch styles */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--muted);
+            transition: .4s;
+            border-radius: 34px;
+            box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.1), inset -2px -2px 4px rgba(255, 255, 255, 0.8);
+        }
+
+        [data-theme="dark"] .slider {
+            box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.2), inset -2px -2px 4px rgba(255, 255, 255, 0.03);
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: var(--background);
+            transition: .4s;
+            border-radius: 50%;
+            box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1), -2px -2px 4px rgba(255, 255, 255, 0.8);
+        }
+
+        [data-theme="dark"] .slider:before {
+            box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2), -2px -2px 4px rgba(255, 255, 255, 0.03);
+        }
+
+        input:checked + .slider {
+            background-color: var(--primary);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+    </style>
+
+    <script>
+        // Global state
+        let currentTheme = localStorage.getItem('theme') || 'light';
+        let settings = JSON.parse(localStorage.getItem('app-settings')) || {
+            useLiters: false,
+            useKilograms: false,
+            currency: 'RUB'
+        };
+        let warehouseItems = JSON.parse(localStorage.getItem('warehouse-items')) || [];
+        let materials = JSON.parse(localStorage.getItem('materials')) || [];
+        let calculations = JSON.parse(localStorage.getItem('calculations')) || [];
+        let repairs = JSON.parse(localStorage.getItem('repairs')) || [];
+        let transactions = JSON.parse(localStorage.getItem('finance-transactions')) || [];
+        let currentRepair = {
+            clientName: '',
+            carInfo: '',
+            description: '',
+            materials: [],
+            laborCost: 0,
+            totalMaterialsCost: 0,
+            totalCost: 0
+        };
+        let selectedDate = new Date();
+        let currentMonth = new Date();
+        let editingMaterialId = null;
+        let editingWarehouseItemId = null;
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeTheme();
+            loadSettings();
+            renderWarehouseItems();
+            renderMaterials();
+            renderCalculationsHistory();
+            renderRepairsHistory();
+            renderAvailableMaterials();
+            updateFinanceOverview();
+            renderCalendar();
+            updateSelectedDateDisplay();
+        });
+
+        // Theme management
+        function initializeTheme() {
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            document.getElementById('theme-icon').textContent = currentTheme === 'dark' ? '☀️' : '🌙';
+            document.getElementById('dark-theme-toggle').checked = currentTheme === 'dark';
+        }
+
+        function toggleTheme() {
+            currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            document.getElementById('theme-icon').textContent = currentTheme === 'dark' ? '☀️' : '🌙';
+            document.getElementById('dark-theme-toggle').checked = currentTheme === 'dark';
+            localStorage.setItem('theme', currentTheme);
+        }
+
+        // Tab management
+        function showTab(tabName, event) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active class from all buttons
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked button
+            event.target.classList.add('active');
+
+            // Refresh data when switching to certain tabs
+            if (tabName === 'finance') {
+                updateFinanceOverview();
+                renderCalendar();
+            } else if (tabName === 'repair') {
+                renderAvailableMaterials();
+            }
+        }
+
+        // Settings management
+        function loadSettings() {
+            document.getElementById('use-liters').checked = settings.useLiters;
+            document.getElementById('use-kilograms').checked = settings.useKilograms;
+            document.getElementById('currency-select').value = settings.currency;
+        }
+
+        function updateSettings() {
+            settings.useLiters = document.getElementById('use-liters').checked;
+            settings.useKilograms = document.getElementById('use-kilograms').checked;
+            settings.currency = document.getElementById('currency-select').value;
+            localStorage.setItem('app-settings', JSON.stringify(settings));
+            
+            // Re-render components that depend on settings
+            renderWarehouseItems();
+            renderMaterials();
+            renderCalculationsHistory();
+            renderRepairsHistory();
+            updateFinanceOverview();
+        }
+
+        function saveSettings() {
+            updateSettings();
+            showToast('Настройки сохранены', 'success');
+        }
+
+        // Utility functions
+        function formatCurrency(value) {
+            const currencySymbols = {
+                'RUB': '₽',
+                'USD': '$',
+                'EUR': '€',
+                'KZT': '₸',
+                'BYN': 'Br'
+            };
+            return `${value.toFixed(2)} ${currencySymbols[settings.currency] || '₽'}`;
+        }
+
+        function getUnitLabel(type) {
+            switch (type) {
+                case 'liquid':
+                    return settings.useLiters ? 'л' : 'мл';
+                case 'weight':
+                    return settings.useKilograms ? 'кг' : 'г';
+                case 'piece':
+                    return 'шт';
+                default:
+                    return '';
+            }
+        }
+
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString('ru-RU', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: var(--background);
+                color: var(--foreground);
+                padding: 1rem 1.5rem;
+                border-radius: var(--radius);
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+                z-index: 1001;
+                animation: slideIn 0.3s ease;
+                border-left: 4px solid ${type === 'success' ? '#22c55e' : type === 'error' ? '#ef4444' : '#3b82f6'};
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => document.body.removeChild(toast), 300);
+            }, 3000);
+        }
+
+        // Modal management
+        function showModal(title, content, actions = '') {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.innerHTML = `
+                <div class="modal-content neumorphic-card">
+                    <div class="modal-header">
+                        <h3 class="modal-title">${title}</h3>
+                        <button class="close-button" onclick="closeModal()">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        ${content}
+                    </div>
+                    ${actions ? `<div class="modal-actions" style="margin-top: 1rem; display: flex; justify-content: flex-end; gap: 0.5rem;">${actions}</div>` : ''}
+                </div>
+            `;
+            
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) closeModal();
+            });
+            
+            document.getElementById('modal-container').appendChild(modal);
+            return modal;
+        }
+
+        function closeModal() {
+            const modal = document.querySelector('.modal');
+            if (modal) {
+                modal.remove();
+            }
+            // Reset editing states
+            editingMaterialId = null;
+            editingWarehouseItemId = null;
+        }
+
+        // Warehouse management
+        function renderWarehouseItems() {
+            const container = document.getElementById('warehouse-items');
+            
+            if (warehouseItems.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <div class="icon">📦</div>
+                        <p>Склад пуст. Добавьте материалы для начала работы.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = warehouseItems.map(item => {
+                const isLowStock = item.currentStock <= item.minStock;
+                return `
+                    <div class="neumorphic-card card animate-fadeIn ${isLowStock ? 'status-low' : ''}">
+                        <div class="card-header">
+                            <h3 class="font-medium text-lg">${item.name}</h3>
+                            <div class="flex gap-1">
+                                <button class="neumorphic-button" onclick="editWarehouseItem('${item.id}')">✏️</button>
+                                <button class="neumorphic-button destructive-button" onclick="deleteWarehouseItem('${item.id}')">🗑️</button>
+                            </div>
+                        </div>
+                        <div class="grid gap-2 text-sm mb-4">
+                            <div class="flex justify-between">
+                                <span class="text-muted">Тип:</span>
+                                <span>${item.type === 'liquid' ? 'Жидкость' : item.type === 'piece' ? 'Штука' : 'Вес'}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-muted">Объем упаковки:</span>
+                                <span>${item.totalVolume} ${getUnitLabel(item.type)}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-muted">Стоимость упаковки:</span>
+                                <span>${formatCurrency(item.totalCost)}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-muted">Цена за единицу:</span>
+                                <span class="text-primary font-medium">${formatCurrency(item.unitCost)}/${getUnitLabel(item.type)}</span>
+                            </div>
+                        </div>
+                        <div class="grid gap-2">
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-muted">Остаток:</span>
+                                <span class="text-sm font-medium ${isLowStock ? 'text-destructive' : ''}">${item.currentStock} ${getUnitLabel(item.type)}</span>
+                            </div>
+                            <div class="flex gap-2">
+                                <input type="number" value="${item.currentStock}" 
+                                       onchange="updateStock('${item.id}', this.value)" 
+                                       class="neumorphic-input text-sm" style="height: 2rem;">
+                            </div>
+                            ${isLowStock ? '<p class="text-xs text-destructive">Заканчивается!</p>' : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function showAddWarehouseItemModal() {
+            editingWarehouseItemId = null;
+            const content = `
+                <div class="grid gap-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="form-group">
+                            <label class="label">Название материала</label>
+                            <input type="text" id="warehouse-name" class="neumorphic-input" placeholder="Название материала">
+                        </div>
+                        <div class="form-group">
+                            <label class="label">Тип материала</label>
+                            <select id="warehouse-type" class="select">
+                                <option value="liquid">Жидкость</option>
+                                <option value="piece">Штука</option>
+                                <option value="weight">Вес</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="label">Объем/количество в упаковке</label>
+                            <input type="number" id="warehouse-volume" class="neumorphic-input" placeholder="0" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label class="label">Стоимость упаковки</label>
+                            <input type="number" id="warehouse-cost" class="neumorphic-input" placeholder="0.00" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label class="label">Текущий остаток</label>
+                            <input type="number" id="warehouse-stock" class="neumorphic-input" placeholder="0" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label class="label">Минимальный остаток</label>
+                            <input type="number" id="warehouse-min-stock" class="neumorphic-input" placeholder="0" step="0.01">
+                        </div>
+                    </div>
+                    <div id="warehouse-unit-cost" class="text-sm text-muted"></div>
+                </div>
+            `;
+
+            const actions = `
+                <button class="neumorphic-button" onclick="closeModal()">Отмена</button>
+                <button class="neumorphic-button primary-button" onclick="saveWarehouseItem()">Сохранить</button>
+            `;
+
+            showModal('Добавить материал', content, actions);
+
+            // Add event listeners for real-time calculation
+            document.getElementById('warehouse-volume').addEventListener('input', updateWarehouseUnitCost);
+            document.getElementById('warehouse-cost').addEventListener('input', updateWarehouseUnitCost);
+        }
+
+        function editWarehouseItem(id) {
+            const item = warehouseItems.find(item => item.id === id);
+            if (!item) return;
+
+            editingWarehouseItemId = id;
+            const content = `
+                <div class="grid gap-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="form-group">
+                            <label class="label">Название материала</label>
+                            <input type="text" id="warehouse-name" class="neumorphic-input" placeholder="Название материала" value="${item.name}">
+                        </div>
+                        <div class="form-group">
+                            <label class="label">Тип материала</label>
+                            <select id="warehouse-type" class="select">
+                                <option value="liquid" ${item.type === 'liquid' ? 'selected' : ''}>Жидкость</option>
+                                <option value="piece" ${item.type === 'piece' ? 'selected' : ''}>Штука</option>
+                                <option value="weight" ${item.type === 'weight' ? 'selected' : ''}>Вес</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="label">Объем/количество в упаковке</label>
+                            <input type="number" id="warehouse-volume" class="neumorphic-input" placeholder="0" step="0.01" value="${item.totalVolume}">
+                        </div>
+                        <div class="form-group">
+                            <label class="label">Стоимость упаковки</label>
+                            <input type="number" id="warehouse-cost" class="neumorphic-input" placeholder="0.00" step="0.01" value="${item.totalCost}">
+                        </div>
+                        <div class="form-group">
+                            <label class="label">Текущий остаток</label>
+                            <input type="number" id="warehouse-stock" class="neumorphic-input" placeholder="0" step="0.01" value="${item.currentStock}">
+                        </div>
+                        <div class="form-group">
+                            <label class="label">Минимальный остаток</label>
+                            <input type="number" id="warehouse-min-stock" class="neumorphic-input" placeholder="0" step="0.01" value="${item.minStock}">
+                        </div>
+                    </div>
+                    <div id="warehouse-unit-cost" class="text-sm text-muted"></div>
+                </div>
+            `;
+
+            const actions = `
+                <button class="neumorphic-button" onclick="closeModal()">Отмена</button>
+                <button class="neumorphic-button primary-button" onclick="saveWarehouseItem()">Сохранить</button>
+            `;
+
+            showModal('Редактировать материал', content, actions);
+
+            // Add event listeners for real-time calculation
+            document.getElementById('warehouse-volume').addEventListener('input', updateWarehouseUnitCost);
+            document.getElementById('warehouse-cost').addEventListener('input', updateWarehouseUnitCost);
+            updateWarehouseUnitCost();
+        }
+
+        function updateWarehouseUnitCost() {
+            const volume = parseFloat(document.getElementById('warehouse-volume').value) || 0;
+            const cost = parseFloat(document.getElementById('warehouse-cost').value) || 0;
+            const unitCost = volume > 0 ? cost / volume : 0;
+            
+            document.getElementById('warehouse-unit-cost').textContent = 
+                volume > 0 && cost > 0 ? `Цена за единицу: ${formatCurrency(unitCost)}` : '';
+        }
+
+        function saveWarehouseItem() {
+            const name = document.getElementById('warehouse-name').value;
+            const type = document.getElementById('warehouse-type').value;
+            const totalVolume = parseFloat(document.getElementById('warehouse-volume').value) || 0;
+            const totalCost = parseFloat(document.getElementById('warehouse-cost').value) || 0;
+            const currentStock = parseFloat(document.getElementById('warehouse-stock').value) || 0;
+            const minStock = parseFloat(document.getElementById('warehouse-min-stock').value) || 0;
+
+            if (!name || totalVolume <= 0 || totalCost <= 0) {
+                showToast('Заполните все обязательные поля', 'error');
+                return;
+            }
+
+            const unitCost = totalCost / totalVolume;
+            
+            if (editingWarehouseItemId) {
+                // Update existing item
+                const itemIndex = warehouseItems.findIndex(item => item.id === editingWarehouseItemId);
+                if (itemIndex !== -1) {
+                    warehouseItems[itemIndex] = {
+                        ...warehouseItems[itemIndex],
+                        name,
+                        type,
+                        totalVolume,
+                        totalCost,
+                        unitCost,
+                        currentStock,
+                        minStock
+                    };
+                }
+            } else {
+                // Add new item
+                const item = {
+                    id: Date.now().toString(),
+                    name,
+                    type,
+                    totalVolume,
+                    totalCost,
+                    unitCost,
+                    currentStock,
+                    minStock
+                };
+                warehouseItems.push(item);
+            }
+
+            localStorage.setItem('warehouse-items', JSON.stringify(warehouseItems));
+            renderWarehouseItems();
+            renderAvailableMaterials();
+            closeModal();
+            showToast(editingWarehouseItemId ? 'Материал обновлен' : 'Материал добавлен на склад', 'success');
+        }
+
+        function updateStock(id, newStock) {
+            const item = warehouseItems.find(item => item.id === id);
+            if (item) {
+                item.currentStock = parseFloat(newStock) || 0;
+                localStorage.setItem('warehouse-items', JSON.stringify(warehouseItems));
+                renderWarehouseItems();
+                renderAvailableMaterials();
+            }
+        }
+
+        function deleteWarehouseItem(id) {
+            if (confirm('Удалить материал со склада?')) {
+                warehouseItems = warehouseItems.filter(item => item.id !== id);
+                localStorage.setItem('warehouse-items', JSON.stringify(warehouseItems));
+                renderWarehouseItems();
+                renderAvailableMaterials();
+                showToast('Материал удален со склада', 'success');
+            }
+        }
+
+        // Materials management
+        function renderMaterials() {
+            const container = document.getElementById('materials-list');
+            const totalContainer = document.getElementById('materials-total');
+            
+            if (materials.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <p>Список материалов пуст. Добавьте материалы для расчета.</p>
+                    </div>
+                `;
+                totalContainer.classList.add('hidden');
+                return;
+            }
+
+            container.innerHTML = materials.map(material => `
+                <div class="neumorphic-card card animate-fadeIn">
+                    <div class="card-header">
+                        <h3 class="font-medium text-lg">${material.name}</h3>
+                        <div class="flex gap-1">
+                            <button class="neumorphic-button" onclick="editMaterial('${material.id}')">✏️</button>
+                            <button class="neumorphic-button destructive-button" onclick="deleteMaterial('${material.id}')">🗑️</button>
+                        </div>
+                    </div>
+                    <div class="grid gap-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-muted">Тип:</span>
+                            <span>${material.type === 'liquid' ? 'Жидкость' : material.type === 'piece' ? 'Штука' : 'Вес'}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-muted">Цена за единицу:</span>
+                            <span>${formatCurrency(material.unitPrice)}/${getUnitLabel(material.type)}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-muted">Расход:</span>
+                            <span>${material.consumption} ${getUnitLabel(material.type)}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-muted">Надбавка:</span>
+                            <span>${material.markupType === 'percentage' ? `${material.markup}%` : formatCurrency(material.markup)}</span>
+                        </div>
+                        <div class="flex justify-between font-medium text-primary" style="border-top: 1px solid var(--border); padding-top: 0.5rem;">
+                            <span>Итого:</span>
+                            <span>${formatCurrency(material.totalCost)}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            const totalSum = materials.reduce((sum, material) => sum + material.totalCost, 0);
+            document.getElementById('materials-total-amount').textContent = formatCurrency(totalSum);
+            totalContainer.classList.remove('hidden');
+        }
+
+        function showAddMaterialModal() {
+            editingMaterialId = null;
+            const content = `
+                <div class="grid gap-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="form-group">
+                            <label class="label">Название материала</label>
+                            <input type="text" id="material-name" class="neumorphic-input" placeholder="Название материала">
+                        </div>
+                        <div class="form-group">
+                            <label class="label">Тип материала</label>
+                            <select id="material-type" class="select">
+                                <option value="liquid">Жидкость</option>
+                                <option value="piece">Штука</option>
+                                <option value="weight">Вес</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="label">Цена за единицу</label>
+                            <input type="number" id="material-price" class="neumorphic-input" placeholder="0.00" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label class="label">Расход</label>
+                            <input type="number" id="material-consumption" class="neumorphic-input" placeholder="0" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label class="label">Тип надбавки</label>
+                            <select id="material-markup-type" class="select">
+                                <option value="percentage">Процент (%)</option>
+                                <option value="fixed">Фиксированная сумма</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="label">Надбавка</label>
+                            <input type="number" id="material-markup" class="neumorphic-input" placeholder="0" step="0.01">
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const actions = `
+                <button class="neumorphic-button" onclick="closeModal()">Отмена</button>
+                <button class="neumorphic-button primary-button" onclick="saveMaterial()">Сохранить</button>
+            `;
+
+            showModal('Добавить материал', content, actions);
+        }
+
+        function editMaterial(id) {
+            const material = materials.find(m => m.id === id);
+            if (!material) return;
+
+            editingMaterialId = id;
+            const content = `
+                <div class="grid gap-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="form-group">
+                            <label class="label">Название материала</label>
+                            <input type="text" id="material-name" class="neumorphic-input" placeholder="Название материала" value="${material.name}">
+                        </div>
+                        <div class="form-group">
+                            <label class="label">Тип материала</label>
+                            <select id="material-type" class="select">
+                                <option value="liquid" ${material.type === 'liquid' ? 'selected' : ''}>Жидкость</option>
+                                <option value="piece" ${material.type === 'piece' ? 'selected' : ''}>Штука</option>
+                                <option value="weight" ${material.type === 'weight' ? 'selected' : ''}>Вес</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="label">Цена за единицу</label>
+                            <input type="number" id="material-price" class="neumorphic-input" placeholder="0.00" step="0.01" value="${material.unitPrice}">
+                        </div>
+                        <div class="form-group">
+                            <label class="label">Расход</label>
+                            <input type="number" id="material-consumption" class="neumorphic-input" placeholder="0" step="0.01" value="${material.consumption}">
+                        </div>
+                        <div class="form-group">
+                            <label class="label">Тип надбавки</label>
+                            <select id="material-markup-type" class="select">
+                                <option value="percentage" ${material.markupType === 'percentage' ? 'selected' : ''}>Процент (%)</option>
+                                <option value="fixed" ${material.markupType === 'fixed' ? 'selected' : ''}>Фиксированная сумма</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="label">Надбавка</label>
+                            <input type="number" id="material-markup" class="neumorphic-input" placeholder="0" step="0.01" value="${material.markup}">
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const actions = `
+                <button class="neumorphic-button" onclick="closeModal()">Отмена</button>
+                <button class="neumorphic-button primary-button" onclick="saveMaterial()">Сохранить</button>
+            `;
+
+            showModal('Редактировать материал', content, actions);
+        }
+
+        function saveMaterial() {
+            const name = document.getElementById('material-name').value;
+            const type = document.getElementById('material-type').value;
+            const unitPrice = parseFloat(document.getElementById('material-price').value) || 0;
+            const consumption = parseFloat(document.getElementById('material-consumption').value) || 0;
+            const markupType = document.getElementById('material-markup-type').value;
+            const markup = parseFloat(document.getElementById('material-markup').value) || 0;
+
+            if (!name || unitPrice <= 0 || consumption <= 0) {
+                showToast('Заполните все обязательные поля', 'error');
+                return;
+            }
+
+            const baseConsumptionCost = unitPrice * consumption;
+            const totalCost = markupType === 'percentage' 
+                ? baseConsumptionCost * (1 + markup / 100)
+                : baseConsumptionCost + markup;
+
+            if (editingMaterialId) {
+                // Update existing material
+                const materialIndex = materials.findIndex(m => m.id === editingMaterialId);
+                if (materialIndex !== -1) {
+                    materials[materialIndex] = {
+                        ...materials[materialIndex],
+                        name,
+                        type,
+                        unitPrice,
+                        consumption,
+                        markupType,
+                        markup,
+                        totalCost
+                    };
+                }
+            } else {
+                // Add new material
+                const material = {
+                    id: Date.now().toString(),
+                    name,
+                    type,
+                    unitPrice,
+                    consumption,
+                    markupType,
+                    markup,
+                    totalCost
+                };
+                materials.push(material);
+            }
+
+            localStorage.setItem('materials', JSON.stringify(materials));
+            renderMaterials();
+            closeModal();
+            showToast(editingMaterialId ? 'Материал обновлен' : 'Материал добавлен', 'success');
+        }
+
+        function deleteMaterial(id) {
+            if (confirm('Удалить материал из списка?')) {
+                materials = materials.filter(material => material.id !== id);
+                localStorage.setItem('materials', JSON.stringify(materials));
+                renderMaterials();
+                showToast('Материал удален', 'success');
+            }
+        }
+
+        function showSaveCalculationModal() {
+            if (materials.length === 0) {
+                showToast('Добавьте материалы для сохранения расчета', 'error');
+                return;
+            }
+
+            const content = `
+                <div class="form-group">
+                    <label class="label">Название заказа/работы</label>
+                    <input type="text" id="calculation-name" class="neumorphic-input" placeholder="Введите название заказа">
+                </div>
+                <div class="text-sm text-muted">
+                    <p>Итоговая сумма: ${formatCurrency(materials.reduce((sum, m) => sum + m.totalCost, 0))}</p>
+                    <p>Дата: ${new Date().toLocaleDateString()}</p>
+                </div>
+            `;
+
+            const actions = `
+                <button class="neumorphic-button" onclick="closeModal()">Отмена</button>
+                <button class="neumorphic-button primary-button" onclick="saveCalculation()">Сохранить</button>
+            `;
+
+            showModal('Сохранить расчет', content, actions);
+        }
+
+        function saveCalculation() {
+            const name = document.getElementById('calculation-name').value;
+            if (!name) {
+                showToast('Введите название заказа', 'error');
+                return;
+            }
+
+            const calculation = {
+                id: Date.now().toString(),
+                name,
+                date: new Date().toISOString(),
+                materials: [...materials],
+                totalSum: materials.reduce((sum, material) => sum + material.totalCost, 0)
+            };
+
+            calculations.push(calculation);
+            localStorage.setItem('calculations', JSON.stringify(calculations));
+            renderCalculationsHistory();
+            closeModal();
+            showToast(`Расчет "${name}" сохранен`, 'success');
+        }
+
+        // Repair management
+        function renderAvailableMaterials() {
+            const container = document.getElementById('available-materials');
+            const availableItems = warehouseItems.filter(item => 
+                item.currentStock > 0 && 
+                !currentRepair.materials.some(m => m.warehouseItemId === item.id)
+            );
+
+            if (availableItems.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center text-muted" style="grid-column: 1 / -1; padding: 2rem;">
+                        Нет доступных материалов на складе или все материалы уже добавлены
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = availableItems.map(item => `
+                <button class="neumorphic-button" onclick="addMaterialToRepair('${item.id}')" 
+                        style="height: auto; padding: 1rem; text-align: left;">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="font-medium">${item.name}</span>
+                        <span>➕</span>
+                    </div>
+                    <div class="text-xs text-muted">
+                        <p>Остаток: ${item.currentStock} ${getUnitLabel(item.type)}</p>
+                        <p>Цена: ${formatCurrency(item.unitCost)}/${getUnitLabel(item.type)}</p>
+                    </div>
+                </button>
+            `).join('');
+        }
+
+        function addMaterialToRepair(warehouseItemId) {
+            const warehouseItem = warehouseItems.find(item => item.id === warehouseItemId);
+            if (!warehouseItem) return;
+
+            const existingMaterial = currentRepair.materials.find(m => m.warehouseItemId === warehouseItemId);
+            if (existingMaterial) {
+                showToast('Материал уже добавлен в ремонт', 'error');
+                return;
+            }
+
+            const newMaterial = {
+                id: Date.now().toString(),
+                warehouseItemId: warehouseItem.id,
+                name: warehouseItem.name,
+                unitCost: warehouseItem.unitCost,
+                usedAmount: 0,
+                totalCost: 0,
+                type: warehouseItem.type
+            };
+
+            currentRepair.materials.push(newMaterial);
+            renderSelectedMaterials();
+            renderAvailableMaterials();
+            updateRepairTotals();
+        }
+
+        function renderSelectedMaterials() {
+            const container = document.getElementById('selected-materials');
+            const section = document.getElementById('selected-materials-section');
+
+            if (currentRepair.materials.length === 0) {
+                section.classList.add('hidden');
+                return;
+            }
+
+            section.classList.remove('hidden');
+            container.innerHTML = currentRepair.materials.map(material => {
+                const warehouseItem = warehouseItems.find(item => item.id === material.warehouseItemId);
+                const maxAmount = warehouseItem ? warehouseItem.currentStock : 0;
+
+                return `
+                    <div class="neumorphic-card" style="padding: 1rem; border: 1px solid var(--border);">
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <h4 class="font-medium">${material.name}</h4>
+                                <p class="text-sm text-muted">Цена: ${formatCurrency(material.unitCost)}/${getUnitLabel(material.type)}</p>
+                                <p class="text-sm text-muted">Доступно: ${maxAmount} ${getUnitLabel(material.type)}</p>
+                            </div>
+                            <button class="neumorphic-button destructive-button" onclick="removeMaterialFromRepair('${material.id}')">🗑️</button>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div style="flex: 1;">
+                                <label class="label text-sm">Количество (${getUnitLabel(material.type)})</label>
+                                <input type="number" value="${material.usedAmount}" 
+                                       onchange="updateMaterialAmount('${material.id}', this.value)"
+                                       max="${maxAmount}" placeholder="0" class="neumorphic-input" style="margin-top: 0.25rem;">
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm text-muted">Стоимость</p>
+                                <p class="font-medium text-primary">${formatCurrency(material.totalCost)}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateMaterialAmount(materialId, amount) {
+            const material = currentRepair.materials.find(m => m.id === materialId);
+            const warehouseItem = warehouseItems.find(item => item.id === material.warehouseItemId);
+            
+            if (material && warehouseItem) {
+                const newAmount = Math.min(parseFloat(amount) || 0, warehouseItem.currentStock);
+                material.usedAmount = newAmount;
+                material.totalCost = newAmount * material.unitCost;
+                renderSelectedMaterials();
+                updateRepairTotals();
+            }
+        }
+
+        function removeMaterialFromRepair(materialId) {
+            currentRepair.materials = currentRepair.materials.filter(m => m.id !== materialId);
+            renderSelectedMaterials();
+            renderAvailableMaterials();
+            updateRepairTotals();
+        }
+
+        function updateRepairTotals() {
+            const laborCost = parseFloat(document.getElementById('labor-cost').value) || 0;
+            const totalMaterialsCost = currentRepair.materials.reduce((sum, material) => sum + material.totalCost, 0);
+            const totalCost = totalMaterialsCost + laborCost;
+
+            currentRepair.laborCost = laborCost;
+            currentRepair.totalMaterialsCost = totalMaterialsCost;
+            currentRepair.totalCost = totalCost;
+
+            document.getElementById('total-materials-cost').textContent = formatCurrency(totalMaterialsCost);
+            document.getElementById('total-labor-cost').textContent = formatCurrency(laborCost);
+            document.getElementById('total-repair-cost').textContent = formatCurrency(totalCost);
+
+            const totalSection = document.getElementById('total-cost-section');
+            if (totalMaterialsCost > 0 || laborCost > 0) {
+                totalSection.classList.remove('hidden');
+            } else {
+                totalSection.classList.add('hidden');
+            }
+        }
+
+        function clearRepair() {
+            if (confirm('Очистить все данные ремонта?')) {
+                currentRepair = {
+                    clientName: '',
+                    carInfo: '',
+                    description: '',
+                    materials: [],
+                    laborCost: 0,
+                    totalMaterialsCost: 0,
+                    totalCost: 0
+                };
+
+                document.getElementById('client-name').value = '';
+                document.getElementById('car-info').value = '';
+                document.getElementById('repair-description').value = '';
+                document.getElementById('labor-cost').value = '';
+
+                renderSelectedMaterials();
+                renderAvailableMaterials();
+                updateRepairTotals();
+                showToast('Расчет очищен', 'success');
+            }
+        }
+
+        function saveRepair() {
+            const clientName = document.getElementById('client-name').value;
+            const carInfo = document.getElementById('car-info').value;
+            const description = document.getElementById('repair-description').value;
+
+            if (!clientName || currentRepair.materials.length === 0) {
+                showToast('Заполните имя клиента и добавьте материалы', 'error');
+                return;
+            }
+
+            // Update warehouse stock
+            currentRepair.materials.forEach(material => {
+                const warehouseItem = warehouseItems.find(item => item.id === material.warehouseItemId);
+                if (warehouseItem) {
+                    warehouseItem.currentStock = Math.max(0, warehouseItem.currentStock - material.usedAmount);
+                }
+            });
+
+            const repair = {
+                id: Date.now().toString(),
+                clientName,
+                carInfo,
+                description,
+                materials: [...currentRepair.materials],
+                laborCost: currentRepair.laborCost,
+                totalMaterialsCost: currentRepair.totalMaterialsCost,
+                totalCost: currentRepair.totalCost,
+                date: new Date().toISOString(),
+                status: 'completed'
+            };
+
+            repairs.push(repair);
+            localStorage.setItem('repairs', JSON.stringify(repairs));
+            localStorage.setItem('warehouse-items', JSON.stringify(warehouseItems));
+
+            renderRepairsHistory();
+            renderWarehouseItems();
+            clearRepair();
+            showToast('Ремонт сохранен, остатки обновлены', 'success');
+        }
+
+        function showReceiptModal() {
+            const clientName = document.getElementById('client-name').value || 'Клиент';
+            const carInfo = document.getElementById('car-info').value;
+            const description = document.getElementById('repair-description').value;
+
+            const content = `
+                <div class="print-content" style="font-family: monospace; max-width: 400px;">
+                    <div class="text-center" style="border-bottom: 2px solid var(--border); padding-bottom: 1rem; margin-bottom: 1rem;">
+                        <h3 class="font-bold">АвтоСервис</h3>
+                        <p class="text-sm text-muted">Чек на ремонт</p>
+                        <p class="text-xs text-muted">${new Date().toLocaleString()}</p>
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <p class="text-sm"><strong>Клиент:</strong> ${clientName}</p>
+                        ${carInfo ? `<p class="text-sm"><strong>Автомобиль:</strong> ${carInfo}</p>` : ''}
+                        ${description ? `<p class="text-sm"><strong>Работы:</strong> ${description}</p>` : ''}
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <h4 class="font-medium mb-2">Материалы:</h4>
+                        ${currentRepair.materials.map(material => `
+                            <div class="flex justify-between text-sm" style="margin-bottom: 0.25rem;">
+                                <span>${material.name} x${material.usedAmount}</span>
+                                <span>${formatCurrency(material.totalCost)}</span>
+                            </div>
+                        `).join('')}
+                        ${currentRepair.laborCost > 0 ? `
+                            <div class="flex justify-between text-sm" style="border-top: 1px solid var(--border); padding-top: 0.5rem; margin-top: 0.5rem;">
+                                <span>Работы</span>
+                                <span>${formatCurrency(currentRepair.laborCost)}</span>
+                            </div>
+                        ` : ''}
+                    </div>
+
+                    <div style="border-top: 2px solid var(--border); padding-top: 0.5rem;">
+                        <div class="flex justify-between font-bold">
+                            <span>ИТОГО:</span>
+                            <span>${formatCurrency(currentRepair.totalCost)}</span>
+                        </div>
+                    </div>
+
+                    <div class="text-center text-xs text-muted" style="margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 1rem;">
+                        <p>Спасибо за обращение!</p>
+                        <p>АвтоКалькулятор - расчет стоимости ремонтов</p>
+                    </div>
+                </div>
+            `;
+
+            const actions = `
+                <button class="neumorphic-button" onclick="printReceipt()">🖨️ Печать</button>
+                <button class="neumorphic-button" onclick="downloadReceipt()">💾 Скачать</button>
+                <button class="neumorphic-button" onclick="closeModal()">Закрыть</button>
+            `;
+
+            showModal('Чек на ремонт', content, actions);
+        }
+
+        function printReceipt() {
+            window.print();
+        }
+
+        function downloadReceipt() {
+            const clientName = document.getElementById('client-name').value || 'Клиент';
+            const receiptHTML = generateReceiptHTML();
+            const blob = new Blob([receiptHTML], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `receipt-${clientName}-${new Date().toLocaleDateString()}.html`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('Чек сохранен', 'success');
+        }
+
+        function generateReceiptHTML() {
+            const clientName = document.getElementById('client-name').value || 'Клиент';
+            const carInfo = document.getElementById('car-info').value;
+            const description = document.getElementById('repair-description').value;
+
+            return `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Чек - ${clientName}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; max-width: 400px; margin: 0 auto; padding: 20px; }
+                        .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
+                        .client-info { margin-bottom: 20px; }
+                        .materials { margin-bottom: 20px; }
+                        .material-item { display: flex; justify-content: space-between; margin-bottom: 5px; }
+                        .total { border-top: 2px solid #000; padding-top: 10px; font-weight: bold; font-size: 18px; }
+                        .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #666; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h2>АвтоСервис</h2>
+                        <p>Чек на ремонт</p>
+                        <p>${new Date().toLocaleString()}</p>
+                    </div>
+                    
+                    <div class="client-info">
+                        <p><strong>Клиент:</strong> ${clientName}</p>
+                        ${carInfo ? `<p><strong>Автомобиль:</strong> ${carInfo}</p>` : ''}
+                        ${description ? `<p><strong>Работы:</strong> ${description}</p>` : ''}
+                    </div>
+                    
+                    <div class="materials">
+                        <h3>Материалы:</h3>
+                        ${currentRepair.materials.map(material => `
+                            <div class="material-item">
+                                <span>${material.name} x${material.usedAmount}</span>
+                                <span>${formatCurrency(material.totalCost)}</span>
+                            </div>
+                        `).join('')}
+                        ${currentRepair.laborCost > 0 ? `
+                            <div class="material-item" style="border-top: 1px solid #ccc; padding-top: 5px; margin-top: 10px;">
+                                <span>Работы</span>
+                                <span>${formatCurrency(currentRepair.laborCost)}</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    <div class="total">
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>ИТОГО:</span>
+                            <span>${formatCurrency(currentRepair.totalCost)}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="footer">
+                        <p>Спасибо за обращение!</p>
+                        <p>АвтоКалькулятор - расчет стоимости ремонтов</p>
+                    </div>
+                </body>
+                </html>
+            `;
+        }
+
+        // History management
+        function renderCalculationsHistory() {
+            const container = document.getElementById('calculations-history');
+            
+            if (calculations.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <p>История расчетов пуста.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = calculations.map(calculation => `
+                <div class="neumorphic-card card animate-fadeIn">
+                    <div class="card-header">
+                        <h4 class="font-medium text-lg">${calculation.name}</h4>
+                        <div class="flex gap-1">
+                            <button class="neumorphic-button" onclick="viewCalculation('${calculation.id}')">👁️</button>
+                            <button class="neumorphic-button destructive-button" onclick="deleteCalculation('${calculation.id}')">🗑️</button>
+                        </div>
+                    </div>
+                    <div class="grid gap-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-muted">Дата:</span>
+                            <span>${formatDate(calculation.date)}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-muted">Материалов:</span>
+                            <span>${calculation.materials.length}</span>
+                        </div>
+                        <div class="flex justify-between font-medium text-primary" style="border-top: 1px solid var(--border); padding-top: 0.5rem;">
+                            <span>Итого:</span>
+                            <span>${formatCurrency(calculation.totalSum)}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderRepairsHistory() {
+            const container = document.getElementById('repairs-history');
+            
+            if (repairs.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <p>История ремонтов пуста.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = repairs.map(repair => `
+                <div class="neumorphic-card card animate-fadeIn">
+                    <div class="card-header">
+                        <h4 class="font-medium text-lg">${repair.clientName}</h4>
+                        <div class="flex gap-1">
+                            <button class="neumorphic-button" onclick="viewRepair('${repair.id}')">👁️</button>
+                            <button class="neumorphic-button" onclick="printRepairReceipt('${repair.id}')">🖨️</button>
+                            <button class="neumorphic-button" onclick="downloadRepairReceipt('${repair.id}')">💾</button>
+                            <button class="neumorphic-button destructive-button" onclick="deleteRepair('${repair.id}')">🗑️</button>
+                        </div>
+                    </div>
+                    <div class="grid gap-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-muted">Автомобиль:</span>
+                            <span>${repair.carInfo || 'Не указан'}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-muted">Дата:</span>
+                            <span>${formatDate(repair.date)}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-muted">Материалов:</span>
+                            <span>${repair.materials.length}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-muted">Материалы:</span>
+                            <span>${formatCurrency(repair.totalMaterialsCost)}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-muted">Работы:</span>
+                            <span>${formatCurrency(repair.laborCost)}</span>
+                        </div>
+                        <div class="flex justify-between font-medium text-primary" style="border-top: 1px solid var(--border); padding-top: 0.5rem;">
+                            <span>Итого:</span>
+                            <span>${formatCurrency(repair.totalCost)}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function viewRepair(repairId) {
+            const repair = repairs.find(r => r.id === repairId);
+            if (!repair) return;
+
+            const content = `
+                <div class="grid gap-6">
+                    <div class="grid grid-cols-2 gap-6">
+                        <div>
+                            <h4 class="font-medium mb-2">Информация о клиенте</h4>
+                            <div class="grid gap-1 text-sm">
+                                <p><strong>Клиент:</strong> ${repair.clientName}</p>
+                                <p><strong>Автомобиль:</strong> ${repair.carInfo || 'Не указан'}</p>
+                                <p><strong>Дата:</strong> ${formatDate(repair.date)}</p>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="font-medium mb-2">Финансовая сводка</h4>
+                            <div class="grid gap-1 text-sm">
+                                <div class="flex justify-between">
+                                    <span>Материалы:</span>
+                                    <span>${formatCurrency(repair.totalMaterialsCost)}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Работы:</span>
+                                    <span>${formatCurrency(repair.laborCost)}</span>
+                                </div>
+                                <div class="flex justify-between font-bold text-primary" style="border-top: 1px solid var(--border); padding-top: 0.25rem;">
+                                    <span>Итого:</span>
+                                    <span>${formatCurrency(repair.totalCost)}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    ${repair.description ? `
+                        <div>
+                            <h4 class="font-medium mb-2">Описание работ</h4>
+                            <p class="text-sm neumorphic-card" style="padding: 0.75rem; background: var(--muted);">${repair.description}</p>
+                        </div>
+                    ` : ''}
+
+                    <div>
+                        <h4 class="font-medium mb-4">Использованные материалы</h4>
+                        <div class="grid gap-3">
+                            ${repair.materials.map(material => `
+                                <div class="neumorphic-card" style="padding: 1rem; border: 1px solid var(--border);">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <span class="font-medium">${material.name}</span>
+                                        <span class="text-primary font-medium">${formatCurrency(material.totalCost)}</span>
+                                    </div>
+                                    <div class="grid grid-cols-4 gap-2 text-sm">
+                                        <div>
+                                            <span class="text-muted">Тип: </span>
+                                            <span>${material.type === 'liquid' ? 'Жидкость' : material.type === 'piece' ? 'Штука' : 'Вес'}</span>
+                                        </div>
+                                        <div>
+                                            <span class="text-muted">Использовано: </span>
+                                            <span>${material.usedAmount} ${getUnitLabel(material.type)}</span>
+                                        </div>
+                                        <div>
+                                            <span class="text-muted">Цена за ед.: </span>
+                                            <span>${formatCurrency(material.unitCost)}</span>
+                                        </div>
+                                        <div>
+                                            <span class="text-muted">Стоимость: </span>
+                                            <span class="font-medium">${formatCurrency(material.totalCost)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const actions = `
+                <button class="neumorphic-button" onclick="printRepairReceipt('${repair.id}')">🖨️ Печать чека</button>
+                <button class="neumorphic-button" onclick="downloadRepairReceipt('${repair.id}')">💾 Скачать чек</button>
+                <button class="neumorphic-button" onclick="closeModal()">Закрыть</button>
+            `;
+
+            showModal('Детали ремонта', content, actions);
+        }
+
+        function printRepairReceipt(repairId) {
+            const repair = repairs.find(r => r.id === repairId);
+            if (!repair) return;
+
+            const printWindow = window.open('', '_blank');
+            const receiptHTML = generateRepairReceiptHTML(repair);
+            printWindow.document.write(receiptHTML);
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        function downloadRepairReceipt(repairId) {
+            const repair = repairs.find(r => r.id === repairId);
+            if (!repair) return;
+
+            const receiptHTML = generateRepairReceiptHTML(repair);
+            const blob = new Blob([receiptHTML], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `receipt-${repair.clientName}-${new Date(repair.date).toLocaleDateString()}.html`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('Чек сохранен', 'success');
+        }
+
+        function generateRepairReceiptHTML(repair) {
+            return `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Чек - ${repair.clientName}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; max-width: 400px; margin: 0 auto; padding: 20px; }
+                        .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
+                        .client-info { margin-bottom: 20px; }
+                        .materials { margin-bottom: 20px; }
+                        .material-item { display: flex; justify-content: space-between; margin-bottom: 5px; }
+                        .total { border-top: 2px solid #000; padding-top: 10px; font-weight: bold; font-size: 18px; }
+                        .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #666; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h2>АвтоСервис</h2>
+                        <p>Чек на ремонт</p>
+                        <p>${formatDate(repair.date)}</p>
+                    </div>
+                    
+                    <div class="client-info">
+                        <p><strong>Клиент:</strong> ${repair.clientName}</p>
+                        ${repair.carInfo ? `<p><strong>Автомобиль:</strong> ${repair.carInfo}</p>` : ''}
+                        ${repair.description ? `<p><strong>Работы:</strong> ${repair.description}</p>` : ''}
+                    </div>
+                    
+                    <div class="materials">
+                        <h3>Материалы:</h3>
+                        ${repair.materials.map(material => `
+                            <div class="material-item">
+                                <span>${material.name} x${material.usedAmount}</span>
+                                <span>${formatCurrency(material.totalCost)}</span>
+                            </div>
+                        `).join('')}
+                        ${repair.laborCost > 0 ? `
+                            <div class="material-item" style="border-top: 1px solid #ccc; padding-top: 5px; margin-top: 10px;">
+                                <span>Работы</span>
+                                <span>${formatCurrency(repair.laborCost)}</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    <div class="total">
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>ИТОГО:</span>
+                            <span>${formatCurrency(repair.totalCost)}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="footer">
+                        <p>Спасибо за обращение!</p>
+                        <p>АвтоКалькулятор - расчет стоимости ремонтов</p>
+                    </div>
+                </body>
+                </html>
+            `;
+        }
+
+        function deleteRepair(repairId) {
+            if (confirm('Удалить ремонт из истории?')) {
+                repairs = repairs.filter(repair => repair.id !== repairId);
+                localStorage.setItem('repairs', JSON.stringify(repairs));
+                renderRepairsHistory();
+                updateFinanceOverview();
+                showToast('Ремонт удален из истории', 'success');
+            }
+        }
+
+        function deleteCalculation(calculationId) {
+            if (confirm('Удалить расчет из истории?')) {
+                calculations = calculations.filter(calc => calc.id !== calculationId);
+                localStorage.setItem('calculations', JSON.stringify(calculations));
+                renderCalculationsHistory();
+                showToast('Расчет удален из истории', 'success');
+            }
+        }
+
+        // Finance management
+        function updateFinanceOverview() {
+            const monthTransactions = transactions.filter(t => {
+                const transactionDate = new Date(t.date);
+                return transactionDate.getMonth() === currentMonth.getMonth() && 
+                       transactionDate.getFullYear() === currentMonth.getFullYear();
+            });
+
+            const totalIncome = monthTransactions
+                .filter(t => t.type === 'income')
+                .reduce((sum, t) => sum + t.amount, 0);
+
+            const totalExpenses = monthTransactions
+                .filter(t => t.type === 'expense')
+                .reduce((sum, t) => sum + t.amount, 0);
+
+            const profit = totalIncome - totalExpenses;
+
+            document.getElementById('monthly-income').textContent = formatCurrency(totalIncome);
+            document.getElementById('monthly-expenses').textContent = formatCurrency(totalExpenses);
+            document.getElementById('monthly-profit').textContent = formatCurrency(profit);
+            document.getElementById('monthly-profit').className = `text-2xl font-bold ${profit >= 0 ? 'text-green' : 'text-red'}`;
+            document.getElementById('monthly-transactions').textContent = monthTransactions.length;
+
+            updateCurrentMonthDisplay();
+            updateCategoryStats();
+            updateDailyTransactions();
+        }
+
+        function updateCurrentMonthDisplay() {
+            const monthNames = [
+                'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+                'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'
+            ];
+            document.getElementById('current-month').textContent = 
+                `${monthNames[currentMonth.getMonth()]} ${currentMonth.getFullYear()}`;
+        }
+
+        function changeMonth(direction) {
+            currentMonth.setMonth(currentMonth.getMonth() + direction);
+            updateFinanceOverview();
+            renderCalendar();
+        }
+
+        function updateCategoryStats() {
+            const monthTransactions = transactions.filter(t => {
+                const transactionDate = new Date(t.date);
+                return transactionDate.getMonth() === currentMonth.getMonth() && 
+                       transactionDate.getFullYear() === currentMonth.getFullYear();
+            });
+
+            const incomeByCategory = {};
+            const expensesByCategory = {};
+
+            monthTransactions.forEach(t => {
+                if (t.type === 'income') {
+                    incomeByCategory[t.category] = (incomeByCategory[t.category] || 0) + t.amount;
+                } else {
+                    expensesByCategory[t.category] = (expensesByCategory[t.category] || 0) + t.amount;
+                }
+            });
+
+            const container = document.getElementById('category-stats');
+            container.innerHTML = `
+                <div>
+                    <h4 class="font-medium mb-3 flex items-center gap-2">
+                        📊 Доходы по категориям
+                    </h4>
+                    <div class="grid gap-2">
+                        ${Object.entries(incomeByCategory).map(([category, amount]) => `
+                            <div class="flex justify-between items-center neumorphic-card" style="padding: 0.5rem;">
+                                <span class="text-sm">${category}</span>
+                                <span class="font-medium text-green">${formatCurrency(amount)}</span>
+                            </div>
+                        `).join('') || '<p class="text-sm text-muted text-center" style="padding: 1rem;">Нет доходов за этот месяц</p>'}
+                    </div>
+                </div>
+                <div>
+                    <h4 class="font-medium mb-3 flex items-center gap-2">
+                        📉 Расходы по категориям
+                    </h4>
+                    <div class="grid gap-2">
+                        ${Object.entries(expensesByCategory).map(([category, amount]) => `
+                            <div class="flex justify-between items-center neumorphic-card" style="padding: 0.5rem;">
+                                <span class="text-sm">${category}</span>
+                                <span class="font-medium text-red">${formatCurrency(amount)}</span>
+                            </div>
+                        `).join('') || '<p class="text-sm text-muted text-center" style="padding: 1rem;">Нет расходов за этот месяц</p>'}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderCalendar() {
+            const container = document.getElementById('calendar-grid');
+            const year = currentMonth.getFullYear();
+            const month = currentMonth.getMonth();
+            
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const startDate = new Date(firstDay);
+            startDate.setDate(startDate.getDate() - firstDay.getDay());
+
+            const days = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+            let calendarHTML = '';
+
+            // Header
+            days.forEach(day => {
+                calendarHTML += `<div class="calendar-day" style="font-weight: 600; color: var(--muted-foreground);">${day}</div>`;
+            });
+
+            // Days
+            for (let i = 0; i < 42; i++) {
+                const currentDate = new Date(startDate);
+                currentDate.setDate(startDate.getDate() + i);
+                
+                const isCurrentMonth = currentDate.getMonth() === month;
+                const isToday = currentDate.toDateString() === new Date().toDateString();
+                const isSelected = currentDate.toDateString() === selectedDate.toDateString();
+                
+                let classes = 'calendar-day';
+                if (isToday) classes += ' today';
+                if (isSelected) classes += ' selected';
+                if (!isCurrentMonth) classes += ' text-muted';
+
+                calendarHTML += `
+                    <div class="${classes}" onclick="selectDate(new Date(${currentDate.getTime()}))" 
+                         style="${!isCurrentMonth ? 'opacity: 0.3;' : ''}">
+                        ${currentDate.getDate()}
+                    </div>
+                `;
+            }
+
+            container.innerHTML = calendarHTML;
+            updateSelectedDateDisplay();
+        }
+
+        function selectDate(date) {
+            selectedDate = date;
+            renderCalendar();
+            updateDailyTransactions();
+        }
+
+        function updateSelectedDateDisplay() {
+            document.getElementById('selected-date-display').textContent = 
+                selectedDate.toLocaleDateString('ru-RU', { 
+                    day: 'numeric', 
+                    month: 'long', 
+                    year: 'numeric' 
+                });
+        }
+
+        function updateDailyTransactions() {
+            const dailyTransactions = transactions.filter(t => {
+                const transactionDate = new Date(t.date);
+                return transactionDate.toDateString() === selectedDate.toDateString();
+            });
+
+            const container = document.getElementById('daily-transactions');
+            
+            if (dailyTransactions.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center text-muted" style="padding: 2rem;">
+                        Нет транзакций за выбранную дату
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = dailyTransactions.map(transaction => `
+                <div class="neumorphic-card" style="padding: 0.75rem;">
+                    <div class="flex justify-between items-start mb-2">
+                        <div style="flex: 1;">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="badge ${transaction.type === 'income' ? 'badge-income' : 'badge-expense'}">
+                                    ${transaction.type === 'income' ? 'Доход' : 'Расход'}
+                                </span>
+                                <span class="text-sm text-muted">${transaction.category}</span>
+                            </div>
+                            <p class="text-sm">${transaction.description}</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="font-medium ${transaction.type === 'income' ? 'text-green' : 'text-red'}">
+                                ${transaction.type === 'income' ? '+' : '-'}${formatCurrency(transaction.amount)}
+                            </span>
+                            ${!transaction.repairId ? `
+                                <div class="flex gap-1">
+                                    <button class="neumorphic-button" onclick="editTransaction('${transaction.id}')" style="padding: 0.25rem; font-size: 0.75rem;">✏️</button>
+                                    <button class="neumorphic-button destructive-button" onclick="deleteTransaction('${transaction.id}')" style="padding: 0.25rem; font-size: 0.75rem;">🗑️</button>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function showAddTransactionModal() {
+            const content = `
+                <div class="grid gap-4">
+                    <div class="form-group">
+                        <label class="label">Тип</label>
+                        <select id="transaction-type" class="select" onchange="updateTransactionCategories()">
+                            <option value="income">Доход</option>
+                            <option value="expense">Расход</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="label">Категория</label>
+                        <select id="transaction-category" class="select">
+                            <option value="">Выберите категорию</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="label">Сумма</label>
+                        <input type="number" id="transaction-amount" class="neumorphic-input" placeholder="0.00" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label class="label">Дата</label>
+                        <input type="date" id="transaction-date" class="neumorphic-input" value="${new Date().toISOString().split('T')[0]}">
+                    </div>
+                    <div class="form-group">
+                        <label class="label">Описание</label>
+                        <textarea id="transaction-description" class="textarea" placeholder="Дополнительная информация" rows="3"></textarea>
+                    </div>
+                </div>
+            `;
+
+            const actions = `
+                <button class="neumorphic-button" onclick="closeModal()">Отмена</button>
+                <button class="neumorphic-button primary-button" onclick="saveTransaction()">Добавить</button>
+            `;
+
+            showModal('Добавить транзакцию', content, actions);
+            updateTransactionCategories();
+        }
+
+        function updateTransactionCategories() {
+            const type = document.getElementById('transaction-type').value;
+            const categorySelect = document.getElementById('transaction-category');
+            
+            const incomeCategories = [
+                'Ремонт автомобилей',
+                'Покраска',
+                'Диагностика',
+                'Консультации',
+                'Продажа запчастей',
+                'Прочие доходы'
+            ];
+
+            const expenseCategories = [
+                'Материалы',
+                'Инструменты',
+                'Аренда',
+                'Коммунальные услуги',
+                'Реклама',
+                'Транспорт',
+                'Налоги',
+                'Прочие расходы'
+            ];
+
+            const categories = type === 'income' ? incomeCategories : expenseCategories;
+            
+            categorySelect.innerHTML = '<option value="">Выберите категорию</option>' +
+                categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+        }
+
+        function saveTransaction() {
+            const type = document.getElementById('transaction-type').value;
+            const category = document.getElementById('transaction-category').value;
+            const amount = parseFloat(document.getElementById('transaction-amount').value) || 0;
+            const date = document.getElementById('transaction-date').value;
+            const description = document.getElementById('transaction-description').value;
+
+            if (!category || amount <= 0) {
+                showToast('Заполните все обязательные поля', 'error');
+                return;
+            }
+
+            const transaction = {
+                id: Date.now().toString(),
+                type,
+                category,
+                amount,
+                description,
+                date: new Date(date).toISOString()
+            };
+
+            transactions.push(transaction);
+            localStorage.setItem('finance-transactions', JSON.stringify(transactions));
+            updateFinanceOverview();
+            closeModal();
+            showToast(`${type === 'income' ? 'Доход' : 'Расход'} добавлен`, 'success');
+        }
+
+        function deleteTransaction(transactionId) {
+            if (confirm('Удалить транзакцию?')) {
+                transactions = transactions.filter(t => t.id !== transactionId);
+                localStorage.setItem('finance-transactions', JSON.stringify(transactions));
+                updateFinanceOverview();
+                showToast('Транзакция удалена', 'success');
+            }
+        }
+
+        function importRepairIncome() {
+            const existingRepairIds = transactions
+                .filter(t => t.repairId)
+                .map(t => t.repairId);
+
+            const newIncomeTransactions = repairs
+                .filter(repair => !existingRepairIds.includes(repair.id))
+                .map(repair => ({
+                    id: `repair-${repair.id}`,
+                    type: 'income',
+                    category: 'Ремонт автомобилей',
+                    amount: repair.totalCost,
+                    description: `Ремонт для ${repair.clientName} (${repair.carInfo || 'автомобиль'})`,
+                    date: repair.date,
+                    source: 'repair',
+                    repairId: repair.id
+                }));
+
+            if (newIncomeTransactions.length > 0) {
+                transactions.push(...newIncomeTransactions);
+                localStorage.setItem('finance-transactions', JSON.stringify(transactions));
+                updateFinanceOverview();
+                showToast(`Импортировано ${newIncomeTransactions.length} записей из ремонтов`, 'success');
+            } else {
+                showToast('Нет новых ремонтов для импорта', 'info');
+            }
+        }
+
+        // Event listeners
+        document.getElementById('labor-cost').addEventListener('input', updateRepairTotals);
+
+        // Add CSS animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
